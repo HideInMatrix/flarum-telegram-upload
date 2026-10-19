@@ -17,12 +17,13 @@
 
 ## 安装
 
-在论坛根目录执行（私有仓库需要你自己的 GitHub 读取权限）：
+**首个公开版本与 Packagist 提交尚在准备中。** 正式上架后，在论坛根目录执行：
 
 ```sh
-composer config repositories.telegram-upload vcs https://github.com/HideInMatrix/flarum-telegram-upload
-composer require hideinmatrix/flarum-telegram-upload:dev-main
+composer require hideinmatrix/flarum-telegram-upload:"^0.1"
 ```
+
+目前有私有仓库读取权限的开发者仍可添加本仓库的 VCS 来源安装 `dev-main`。发布流程、后续更新、Extension Manager 和当前路径包切换方式参见 [发布说明](docs/releasing.md)，版本变更参见 [CHANGELOG](CHANGELOG.md)。
 
 在管理后台启用 **Telegram Upload**，进入该扩展的配置页填写并保存：
 
