@@ -33,11 +33,22 @@ final class Configuration
         return $id;
     }
 
+    public function apiKey(): string
+    {
+        $key = (string) ($this->values['api_key'] ?? '');
+        if (strlen($key) < 32 || preg_match('/[\x00-\x1F\x7F]/', $key)) {
+            throw new InvalidArgumentException('Configure a private tg-disk api_key of at least 32 characters without control characters.');
+        }
+
+        return $key;
+    }
+
     public function isConfigured(): bool
     {
         try {
             $this->baseUrl();
             $this->chatId();
+            $this->apiKey();
 
             return true;
         } catch (InvalidArgumentException) {

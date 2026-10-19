@@ -30,10 +30,13 @@ composer require hideinmatrix/flarum-telegram-upload:dev-main
 'telegram-upload' => [
     'base_url' => 'https://your-tg-disk.example.com',
     'chat_id' => '-1000000000000',
+    'api_key' => '替换为 tg-disk 的私密 NUXT_API_KEY',
 ],
 ```
 
-也可以配置论坛容器环境变量 `TG_DISK_BASE_URL` 和 `TG_DISK_CHAT_ID`；`config.php` 的同名配置优先。`.env.example` 只是示例，本扩展不会自动加载 `.env`。论坛不需要持有 Telegram Bot Token。
+`api_key` 必须与 tg-disk 服务端的私密 `NUXT_API_KEY` 完全一致，至少 32 个字符。不要使用登录会话密码 `NUXT_SESSION_PASSWORD`，也不要将真实密钥提交到仓库。
+
+也可以配置论坛容器环境变量 `TG_DISK_BASE_URL`、`TG_DISK_CHAT_ID` 和 `TG_DISK_API_KEY`；`config.php` 的同名配置优先。`.env.example` 只是示例，本扩展不会自动加载 `.env`。论坛不需要持有 Telegram Bot Token。缺少有效配置时，Telegram 上传存储不会启用。
 
 然后在管理后台启用 **Telegram Upload**，清理缓存：
 
@@ -59,21 +62,25 @@ composer test:integration
 
 PHPUnit 集成测试使用 Flarum 官方 `flarum/testing`。测试初始化默认使用 SQLite；不要指向生产数据库。测试目录与缓存均已被 Git 忽略。
 
-没有本地 PHP 时，可以使用官方 Composer 容器：
+没有本地 PHP 时，先构建包含 Flarum 所需 GD 扩展的 Composer 测试容器：
 
 ```sh
-docker run --rm -v "$PWD:/app" -w /app composer:2 composer install
-docker run --rm -v "$PWD:/app" -w /app composer:2 composer test:unit
+docker build -f docker/Dockerfile.test -t flarum-telegram-upload-test:local .
+docker run --rm -v "$PWD:/app" -w /app flarum-telegram-upload-test:local composer install
+# 首次创建隔离的 SQLite 测试数据库：
 docker run --rm -v "$PWD:/app" -w /app \
   -e FLARUM_TEST_TMP_DIR_LOCAL=/app/tests/integration/tmp \
-  composer:2 composer test:integration
+  flarum-telegram-upload-test:local composer test:setup
+docker run --rm -v "$PWD:/app" -w /app \
+  -e FLARUM_TEST_TMP_DIR_LOCAL=/app/tests/integration/tmp \
+  flarum-telegram-upload-test:local composer test
 ```
 
-集成测试验证扩展启动与依赖注入、旧 URL、访客下载限制、授权图片响应以及删除提示。测试对 tg-disk 使用模拟 HTTP，不会发送真实附件或删除 Telegram 消息。
+测试验证上传鉴权、密钥不进入公开 API 数据、扩展启动与依赖注入、旧 URL、访客下载限制、授权图片响应以及删除提示。测试对 tg-disk 使用模拟 HTTP，不会发送真实附件或删除 Telegram 消息。
 
 ## 运行条件
 
-tg-disk 需要提供 `POST /api/telegram/send` 和 `GET /file/{file_id}`，上传结果包含 `code`、`data.file_id`、`data.file_size`；Bot 及频道权限在 tg-disk 侧配置。服务器必须能访问 tg-disk，tg-disk 的文件访问规则也需允许论坛服务端读取。10 MiB 是当前对接接口的限制。
+tg-disk 需要提供 `POST /api/telegram/send` 和 `GET /file/{file_id}`，上传结果包含 `code`、`data.file_id`、`data.file_size`；Bot 及频道权限在 tg-disk 侧配置。上传通过服务端 `X-API-Key` 请求头鉴权，401/403 返回明确提示，不转发上游响应中的敏感内容。文件读取沿用 tg-disk 的 host/referer 规则，不附加 API Key。服务器必须能访问 tg-disk，tg-disk 的文件访问规则也需允许论坛服务端读取。10 MiB 是当前对接接口的限制。[接口核对记录](docs/tg-disk-api.md)
 
 论坛数据库仍保存附件索引和权限关联，需与扩展配置一起备份。附件读取依赖论坛、tg-disk 和 Telegram 的可用性，下载流量会经过论坛。tg-disk 本身的上传鉴权和文件直链访问策略由其服务端负责。
 

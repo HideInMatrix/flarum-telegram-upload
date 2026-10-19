@@ -6,5 +6,7 @@ return [
     'telegram-upload' => [
         'base_url' => 'https://your-tg-disk.example.com',
         'chat_id' => '-1000000000000',
+        // Match tg-disk's private NUXT_API_KEY (at least 32 characters).
+        'api_key' => '',
     ],
 ];

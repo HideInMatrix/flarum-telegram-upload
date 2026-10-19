@@ -7,4 +7,5 @@ hideinmatrix-telegram-upload:
   api:
     too_large: Attachments must be no larger than 10 MiB.
     upload_failed: Telegram upload failed. Check the tg-disk configuration and try again.
+    authentication_failed: tg-disk rejected authentication. Check the API key and upstream access policy.
     delete_unsupported: Remote deletion is not implemented. Hide the file in the media manager; its Telegram copy will remain.

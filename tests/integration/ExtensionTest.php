@@ -20,7 +20,7 @@ final class ExtensionTest extends TestCase
     {
         parent::setUp();
         $this->extension('fof-upload', 'hideinmatrix-telegram-upload');
-        $this->config('telegram-upload', ['base_url' => 'https://disk.example.com', 'chat_id' => '-100123456']);
+        $this->config('telegram-upload', ['base_url' => 'https://disk.example.com', 'chat_id' => '-100123456', 'api_key' => str_repeat('k', 32)]);
     }
 
     public function test_flarum_registers_the_adapter_and_preserves_legacy_urls(): void
@@ -34,6 +34,19 @@ final class ExtensionTest extends TestCase
     {
         $response = $this->send($this->request('GET', '/api/tinker-telegram/not-a-file'));
         self::assertSame(403, $response->getStatusCode());
+    }
+
+    public function test_missing_api_key_disables_upload_storage(): void
+    {
+        $this->config('telegram-upload.api_key', '');
+        self::assertFalse($this->app()->getContainer()->make(Manager::class)->adapters()->get('telegram'));
+    }
+
+    public function test_api_key_is_not_in_the_public_forum_payload(): void
+    {
+        $response = $this->send($this->request('GET', '/api'));
+        self::assertSame(200, $response->getStatusCode());
+        self::assertStringNotContainsString(str_repeat('k', 32), (string) $response->getBody());
     }
 
     public function test_authorized_image_download_preserves_bytes_and_content_type(): void

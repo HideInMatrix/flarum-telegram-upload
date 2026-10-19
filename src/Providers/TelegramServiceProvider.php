@@ -23,6 +23,7 @@ final class TelegramServiceProvider extends AbstractServiceProvider
             return new Configuration(array_replace([
                 'base_url' => getenv('TG_DISK_BASE_URL') ?: '',
                 'chat_id' => getenv('TG_DISK_CHAT_ID') ?: '',
+                'api_key' => getenv('TG_DISK_API_KEY') ?: '',
             ], is_array($values) ? $values : []));
         });
         $this->container->singleton(TgDiskClient::class, function ($container) {

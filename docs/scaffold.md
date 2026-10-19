@@ -9,3 +9,5 @@ Official references:
 - https://github.com/flarum/cli/tree/3.x/boilerplate/skeleton/extension
 
 composer.json, extend.php and README were then adapted to package the existing Telegram storage adapter. No site credentials were copied.
+
+This project was generated using `flarum-cli init`; it was not copied using GitHub's “Use this template” button. The official extension boilerplate lives inside the `flarum/cli` repository linked above. CLI 3.x targets Flarum 2.x; `flarum/flarum` is the forum application skeleton, not this extension's template.

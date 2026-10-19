@@ -4,6 +4,7 @@ namespace HideInMatrix\TelegramUpload\Client;
 
 use GuzzleHttp\ClientInterface;
 use HideInMatrix\TelegramUpload\Configuration;
+use HideInMatrix\TelegramUpload\Exceptions\ApiKeyRejectedException;
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 
@@ -21,6 +22,7 @@ final class TgDiskClient
         // tg-disk selects sendDocument for .bin; image and GIF bytes stay intact.
         $name = $uuid.'.bin';
         $response = $this->http->request('POST', $this->configuration->baseUrl().'/api/telegram/send', [
+            'headers' => ['X-API-Key' => $this->configuration->apiKey()],
             'multipart' => [
                 ['name' => 'chatId', 'contents' => $this->configuration->chatId()],
                 ['name' => 'fileName', 'contents' => $name],
@@ -29,8 +31,17 @@ final class TgDiskClient
             'timeout' => 50,
             'connect_timeout' => 10,
             'allow_redirects' => false,
+            'http_errors' => false,
         ]);
 
+        $status = $response->getStatusCode();
+        if ($status === 401 || $status === 403) {
+            // Do not propagate upstream response bodies or request headers.
+            throw new ApiKeyRejectedException('tg-disk rejected upload authentication.', $status);
+        }
+        if ($status !== 200) {
+            throw new RuntimeException('tg-disk upload returned HTTP '.$status.'.');
+        }
         $result = json_decode((string) $response->getBody(), true, 32, JSON_THROW_ON_ERROR);
         $id = $result['data']['file_id'] ?? null;
         if ($response->getStatusCode() !== 200 || ($result['code'] ?? null) !== 200 || !Configuration::validFileId($id)) {
@@ -49,6 +60,8 @@ final class TgDiskClient
             throw new RuntimeException('Invalid Telegram file ID.');
         }
 
+        // /file is governed by tg-disk's existing host/referer rules, not assertApiKey.
+        // Keep the private API key off public file/cache requests.
         return $this->http->request('GET', $this->configuration->baseUrl().'/file/'.rawurlencode($fileId), [
             'stream' => true,
             'timeout' => 60,

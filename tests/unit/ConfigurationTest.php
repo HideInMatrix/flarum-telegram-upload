@@ -15,7 +15,7 @@ final class ConfigurationTest extends TestCase
 
     public function test_valid_configuration_normalizes_the_base_url(): void
     {
-        $configuration = new Configuration(['base_url' => 'https://disk.example.com/', 'chat_id' => '-100123456']);
+        $configuration = new Configuration(['base_url' => 'https://disk.example.com/', 'chat_id' => '-100123456', 'api_key' => str_repeat('k', 32)]);
         self::assertTrue($configuration->isConfigured());
         self::assertSame('https://disk.example.com', $configuration->baseUrl());
     }
@@ -23,7 +23,18 @@ final class ConfigurationTest extends TestCase
     #[DataProvider('invalidUrls')]
     public function test_invalid_base_urls_disable_the_adapter(string $url): void
     {
-        self::assertFalse((new Configuration(['base_url' => $url, 'chat_id' => '-100123456']))->isConfigured());
+        self::assertFalse((new Configuration(['base_url' => $url, 'chat_id' => '-100123456', 'api_key' => str_repeat('k', 32)]))->isConfigured());
+    }
+
+    #[DataProvider('invalidKeys')]
+    public function test_missing_short_and_header_unsafe_keys_disable_the_adapter(string $key): void
+    {
+        self::assertFalse((new Configuration(['base_url' => 'https://disk.example.com', 'chat_id' => '-100123456', 'api_key' => $key]))->isConfigured());
+    }
+
+    public static function invalidKeys(): array
+    {
+        return [[''], ['short'], [str_repeat('k', 31)], [str_repeat('k', 32)."\r\nInjected: header"]];
     }
 
     public static function invalidUrls(): array

@@ -8,6 +8,7 @@ use FoF\Upload\Contracts\UploadAdapter;
 use FoF\Upload\File;
 use HideInMatrix\TelegramUpload\Client\TgDiskClient;
 use HideInMatrix\TelegramUpload\Configuration;
+use HideInMatrix\TelegramUpload\Exceptions\ApiKeyRejectedException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -40,6 +41,8 @@ final class Telegram implements UploadAdapter
 
         try {
             $id = $this->client->upload($file->uuid, $contents, (int) $size);
+        } catch (ApiKeyRejectedException) {
+            throw new ValidationException(['upload' => $this->translator->trans('hideinmatrix-telegram-upload.api.authentication_failed')]);
         } catch (\Throwable) {
             // Upstream exceptions may contain sensitive service details.
             throw new ValidationException(['upload' => $this->translator->trans('hideinmatrix-telegram-upload.api.upload_failed')]);
