@@ -4,6 +4,7 @@ namespace HideInMatrix\TelegramUpload\Providers;
 
 use Flarum\Foundation\AbstractServiceProvider;
 use Flarum\Foundation\Config;
+use Flarum\Settings\SettingsRepositoryInterface;
 use FoF\Upload\Commands\DownloadHandler;
 use FoF\Upload\Processors\ImageProcessor;
 use GuzzleHttp\Client;
@@ -20,11 +21,21 @@ final class TelegramServiceProvider extends AbstractServiceProvider
             $config = $container->make(Config::class);
             $values = $config['telegram-upload'] ?? [];
 
-            return new Configuration(array_replace([
+            $values = array_replace([
                 'base_url' => getenv('TG_DISK_BASE_URL') ?: '',
                 'chat_id' => getenv('TG_DISK_CHAT_ID') ?: '',
                 'api_key' => getenv('TG_DISK_API_KEY') ?: '',
-            ], is_array($values) ? $values : []));
+            ], is_array($values) ? $values : []);
+            $settings = $container->make(SettingsRepositoryInterface::class);
+            foreach (['upload_url', 'chat_id', 'api_key'] as $name) {
+                $value = $settings->get('hideinmatrix-telegram-upload.'.$name);
+                // A saved empty field deliberately disables that value; never revive an old secret.
+                if ($value !== null) {
+                    $values[$name] = $value;
+                }
+            }
+
+            return new Configuration($values);
         });
         $this->container->singleton(TgDiskClient::class, function ($container) {
             return new TgDiskClient(new Client(), $container->make(Configuration::class));

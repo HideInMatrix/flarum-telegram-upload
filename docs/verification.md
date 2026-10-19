@@ -8,8 +8,9 @@
 
 - `composer validate --strict`：通过。
 - `composer lint`：PHP 语法检查通过。
-- `composer test:unit`：25 项测试、49 项断言通过。
-- `composer test:integration`：6 项测试、10 项断言通过。
+- `npm run build`：Flarum 官方 webpack 配置的管理端生产构建通过。
+- `composer test:unit`：30 项测试、55 项断言通过。
+- `composer test:integration`：10 项测试、29 项断言通过。
 
 覆盖配置缺失与 URL 校验、上传 multipart 原始字节、Telegram document 文件名、上游失败及大小不一致、超限请求拦截、下载响应和文件名、真实 Flarum 扩展启动、旧 URL 兼容、访客拒绝、管理员图片读取及明确的删除提示。
 
@@ -17,4 +18,4 @@
 
 PHP 8.5 下，上游 `middlewares/utils` 的可空参数声明触发 3 条 deprecation 提示；没有测试错误或失败。未修改依赖源码以隐藏这些提示。
 
-本轮使用模拟 tg-disk HTTP，不访问真实 Telegram；没有部署到线上论坛，也没有改变线上用户组权限。上线迁移仍需按 `docs/migration.md` 执行。
+本轮使用模拟 tg-disk HTTP，不访问真实 Telegram。新增 Flarum 2.x Admin extender 配置页及上传接口 URL、频道 ID、API Key 校验；验证管理员保存、游客和普通成员拒绝修改、数据库设置优先级、清空密钥以及数据库密钥不出现在公开 API。未改变用户组权限。生产迁移参见 `docs/migration.md`。

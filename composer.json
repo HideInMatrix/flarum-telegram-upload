@@ -25,7 +25,7 @@
             "icon": {"name": "fab fa-telegram", "backgroundColor": "#229ed9", "color": "#ffffff"}
         },
         "flarum-cli": {"modules": {
-            "forum": false, "admin": false, "js": false, "jsCommon": false,
+            "forum": false, "admin": true, "js": true, "jsCommon": false,
             "css": false, "locale": true, "gitConf": true, "githubActions": true,
             "prettier": false, "typescript": false, "bundlewatch": false,
             "frontendTesting": false, "backendTesting": true, "phpstan": false,

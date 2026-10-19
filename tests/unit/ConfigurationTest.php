@@ -37,6 +37,25 @@ final class ConfigurationTest extends TestCase
         return [[''], ['short'], [str_repeat('k', 31)], [str_repeat('k', 32)."\r\nInjected: header"]];
     }
 
+    public function test_explicit_endpoint_takes_precedence_and_derives_download_base(): void
+    {
+        $config = new Configuration(['base_url' => 'https://old.example.com', 'upload_url' => 'https://disk.example.com/prefix/api/telegram/send']);
+        self::assertSame('https://disk.example.com/prefix', $config->baseUrl());
+        self::assertSame('https://disk.example.com/prefix/api/telegram/send', $config->uploadUrl());
+    }
+
+    #[DataProvider('invalidEndpoints')]
+    public function test_invalid_or_cleared_endpoint_does_not_fall_back(string $url): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        (new Configuration(['base_url' => 'https://old.example.com', 'upload_url' => $url]))->uploadUrl();
+    }
+
+    public static function invalidEndpoints(): array
+    {
+        return [[''], ['https://disk.example.com'], ['https://disk.example.com/api/telegram/send/'], ['https://disk.example.com/api/telegram/send?key=secret']];
+    }
+
     public static function invalidUrls(): array
     {
         return [['http://disk.example.com'], ['https://user:secret@disk.example.com'], ['https://disk.example.com?token=x'], ['https://disk.example.com/#key']];

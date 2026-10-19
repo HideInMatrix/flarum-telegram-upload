@@ -21,7 +21,7 @@ final class TgDiskClient
 
         // tg-disk selects sendDocument for .bin; image and GIF bytes stay intact.
         $name = $uuid.'.bin';
-        $response = $this->http->request('POST', $this->configuration->baseUrl().'/api/telegram/send', [
+        $response = $this->http->request('POST', $this->configuration->uploadUrl(), [
             'headers' => ['X-API-Key' => $this->configuration->apiKey()],
             'multipart' => [
                 ['name' => 'chatId', 'contents' => $this->configuration->chatId()],

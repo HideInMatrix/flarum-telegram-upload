@@ -2,7 +2,7 @@
 
 Generated with the official @flarum/cli 3.0.13 init command on 2026-10-19.
 
-Backend-only Flarum 2.x extension; PHP unit/integration testing, Git configuration, GitHub Actions, EditorConfig, StyleCI and locales enabled. No frontend bundle is required.
+Flarum 2.x extension with PHP unit/integration testing, Git configuration, GitHub Actions, EditorConfig, StyleCI and locales. The initial backend-only scaffold was extended with the official CLI JavaScript admin entry structure and `flarum-webpack-config` 3.x for the standard Flarum 2.x declarative Admin settings extender. The built admin bundle is committed for Composer installations.
 
 Official references:
 - https://docs.flarum.org/extend/start/

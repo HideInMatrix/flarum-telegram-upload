@@ -12,15 +12,26 @@ final class Configuration
 
     public function baseUrl(): string
     {
-        $url = rtrim((string) ($this->values['base_url'] ?? ''), '/');
+        $url = array_key_exists('upload_url', $this->values)
+            ? (string) $this->values['upload_url']
+            : rtrim((string) ($this->values['base_url'] ?? ''), '/').'/api/telegram/send';
         $parts = parse_url($url);
 
         if (!$parts || ($parts['scheme'] ?? '') !== 'https' || empty($parts['host'])
             || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])) {
-            throw new InvalidArgumentException('Configure an HTTPS tg-disk base_url without credentials, query or fragment.');
+            throw new InvalidArgumentException('Configure an HTTPS tg-disk URL without credentials, query or fragment.');
         }
 
-        return $url;
+        if (!str_ends_with($parts['path'] ?? '', '/api/telegram/send')) {
+            throw new InvalidArgumentException('The upload URL must end in /api/telegram/send.');
+        }
+
+        return substr($url, 0, -strlen('/api/telegram/send'));
+    }
+
+    public function uploadUrl(): string
+    {
+        return $this->baseUrl().'/api/telegram/send';
     }
 
     public function chatId(): string

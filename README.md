@@ -24,21 +24,19 @@ composer config repositories.telegram-upload vcs https://github.com/HideInMatrix
 composer require hideinmatrix/flarum-telegram-upload:dev-main
 ```
 
-将以下配置**合并**到论坛现有 `config.php` 返回的数组中，不要覆盖数据库等已有配置：
+在管理后台启用 **Telegram Upload**，进入该扩展的配置页填写并保存：
 
-```php
-'telegram-upload' => [
-    'base_url' => 'https://your-tg-disk.example.com',
-    'chat_id' => '-1000000000000',
-    'api_key' => '替换为 tg-disk 的私密 NUXT_API_KEY',
-],
-```
+| 字段 | 填写内容 |
+| --- | --- |
+| 上传接口 URL | `https://your-tg-disk.example.com/api/telegram/send`，必须是完整 HTTPS 接口地址 |
+| TG_DISK_API_KEY | 与 tg-disk 服务端私密 `NUXT_API_KEY` 完全一致，至少 32 个字符 |
+| 上传频道 ID | Telegram 数字频道 ID，例如 `-1000000000000` |
 
-`api_key` 必须与 tg-disk 服务端的私密 `NUXT_API_KEY` 完全一致，至少 32 个字符。不要使用登录会话密码 `NUXT_SESSION_PASSWORD`，也不要将真实密钥提交到仓库。
+密钥输入框使用密码样式，设置仅管理员可读，不会写入论坛公开 API。不要填写 `NUXT_SESSION_PASSWORD`，也不要提交真实密钥到仓库。论坛不需要 Telegram Bot Token。保存立即作用于后续上传请求，无需重新创建容器。缺少有效配置时，Telegram 上传存储不会启用。
 
-也可以配置论坛容器环境变量 `TG_DISK_BASE_URL`、`TG_DISK_CHAT_ID` 和 `TG_DISK_API_KEY`；`config.php` 的同名配置优先。`.env.example` 只是示例，本扩展不会自动加载 `.env`。论坛不需要持有 Telegram Bot Token。缺少有效配置时，Telegram 上传存储不会启用。
+旧版的 `config.php` 中 `telegram-upload` 配置和 `TG_DISK_BASE_URL`、`TG_DISK_CHAT_ID`、`TG_DISK_API_KEY` 环境变量仍兼容；**后台已保存的字段优先，包括空值**。建议统一使用后台配置，移除旧配置以免混淆。扩展不自动加载 `.env`。
 
-然后在管理后台启用 **Telegram Upload**，清理缓存：
+安装或升级后执行：
 
 ```sh
 php flarum cache:clear
@@ -76,7 +74,9 @@ docker run --rm -v "$PWD:/app" -w /app \
   flarum-telegram-upload-test:local composer test
 ```
 
-测试验证上传鉴权、密钥不进入公开 API 数据、扩展启动与依赖注入、旧 URL、访客下载限制、授权图片响应以及删除提示。测试对 tg-disk 使用模拟 HTTP，不会发送真实附件或删除 Telegram 消息。
+测试验证后台保存与校验、普通用户不能修改密钥、清空配置不会回退到旧密钥、上传鉴权、密钥不进入公开 API 数据、扩展启动与依赖注入、旧 URL、访客下载限制、授权图片响应以及删除提示。测试对 tg-disk 使用模拟 HTTP，不会发送真实附件或删除 Telegram 消息。
+
+前端源码沿用官方 CLI 的 JavaScript 管理端结构；修改后台界面后在 `js/` 执行 `npm ci && npm run build`，并提交 `js/dist/admin.js`，以便 Composer 安装直接使用。
 
 ## 运行条件
 

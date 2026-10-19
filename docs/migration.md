@@ -1,10 +1,10 @@
 # 从站点内适配器迁移
 
-本次仓库化不直接修改正在运行的论坛。以下步骤供安排部署时使用。
+以下步骤适用于从旧站点适配器迁移，操作前备份。
 
 1. 备份论坛数据库、`composer.json`、`composer.lock`、根目录 `extend.php`、现有 `tinker-telegram/` 目录及其配置。
 2. 使用 Composer 安装本扩展，暂不启用。
-3. 将旧 `tinker-telegram/config.php` 中的 `base_url`、`chat_id` 填入论坛根 `config.php` 的 `telegram-upload` 配置，并新增 `api_key`：必须与 tg-disk 私密 `NUXT_API_KEY` 完全一致且至少 32 个字符。也可以使用 `TG_DISK_API_KEY` 容器环境变量，但需移除 config.php 中同名空值。不要把实际配置提交到扩展仓库。
+3. 在 Telegram Upload 后台配置页填写完整上传接口 URL、上传频道 ID 和 `TG_DISK_API_KEY`。旧 `base_url` 加 `/api/telegram/send` 即为完整上传接口地址；密钥与 tg-disk 私密 `NUXT_API_KEY` 一致且至少 32 个字符。后台保存成功后，可删除旧私密配置和容器中相应 TG_DISK 环境变量，保留其他应用环境变量。
 4. 从论坛根 `extend.php` 中移除加载 `tinker-telegram/extend.php` 的那一项，保留其他扩展项。不要同时加载旧适配器与本扩展，否则会重复注册同一下载路由。
 5. 在 Flarum 后台启用 `Telegram Upload` 并执行 `php flarum cache:clear`。
 6. 检查 FoF Upload 的 MIME 规则仍使用 `telegram`，文件大小上限为 10240 KB，按实际用户组测试图片与压缩包的读取。
@@ -19,4 +19,6 @@
 
 ## 已安装此 Composer 扩展时升级
 
-tg-disk 启用 API Key 后，旧上传客户端会收到 401；只更新 tg-disk 不会自动更新论坛适配器。先在论坛私密配置中补齐上述密钥，再执行 `composer update hideinmatrix/flarum-telegram-upload --with-dependencies` 并清缓存。密钥不会存入浏览器设置或论坛公开 API；上传失败提示鉴权问题时，请在服务器配置中核对双方密钥。历史附件读取仍走原路由。
+tg-disk 启用 API Key 后，旧上传客户端会收到 401。升级本包并清缓存，在 Telegram Upload 后台填写三项配置。后台字段覆盖旧 `config.php` 和环境变量，即使保存为空也不回退。密钥作为管理员设置保存在论坛数据库中，需保护数据库与备份；只有管理员设置载荷包含密钥，论坛公开 API 不包含。历史附件读取仍走原路由。
+
+若需清理第三方包源码，可先备份、禁用相关扩展后执行 `composer reinstall fof/upload hideinmatrix/flarum-telegram-upload`，再启用扩展并清缓存。Composer 重新安装包不等于 Flarum 的“清除数据”，不要清除附件表或卸载扩展数据。FoF Upload 保持官方原版，适配行为由独立扩展实现。
