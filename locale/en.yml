@@ -1,0 +1,10 @@
+fof-upload:
+  admin:
+    upload_methods:
+      telegram: Telegram (tg-disk, 10 MiB)
+
+hideinmatrix-telegram-upload:
+  api:
+    too_large: Attachments must be no larger than 10 MiB.
+    upload_failed: Telegram upload failed. Check the tg-disk configuration and try again.
+    delete_unsupported: Remote deletion is not implemented. Hide the file in the media manager; its Telegram copy will remain.

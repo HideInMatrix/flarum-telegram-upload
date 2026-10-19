@@ -1,0 +1,10 @@
+fof-upload:
+  admin:
+    upload_methods:
+      telegram: Telegram（tg-disk，10 MiB）
+
+hideinmatrix-telegram-upload:
+  api:
+    too_large: 附件大小不能超过 10 MiB。
+    upload_failed: Telegram 上传失败，请检查 tg-disk 配置后重试。
+    delete_unsupported: 暂未接入远程删除。请使用媒体管理器中的“隐藏”；Telegram 上的副本会继续保留。
