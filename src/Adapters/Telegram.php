@@ -57,9 +57,9 @@ final class Telegram implements UploadAdapter
         return $file;
     }
 
-    public function delete(File $file)
+    public function delete(File $file): bool
     {
-        // Do not pretend that Telegram content was removed by deleting only its DB row.
-        throw new ValidationException(['file' => $this->translator->trans('hideinmatrix-telegram-upload.api.delete_unsupported')]);
+        // Forum-only deletion: FoF removes the media record; Telegram keeps its copy.
+        return true;
     }
 }

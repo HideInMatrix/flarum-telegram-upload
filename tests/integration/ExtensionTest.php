@@ -72,10 +72,9 @@ final class ExtensionTest extends TestCase
         self::assertSame(hash('sha256', $bytes), hash('sha256', (string) $response->getBody()));
     }
 
-    public function test_remote_deletion_is_explicit_and_does_not_report_false_success(): void
+    public function test_adapter_acknowledges_forum_only_deletion(): void
     {
         $adapter = $this->app()->getContainer()->make(Manager::class)->instantiate('telegram');
-        $this->expectException(\Flarum\Foundation\ValidationException::class);
-        $adapter->delete(new File());
+        self::assertTrue($adapter->delete(new File()));
     }
 }

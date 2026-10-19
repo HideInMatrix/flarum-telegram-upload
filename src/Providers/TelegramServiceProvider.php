@@ -9,6 +9,7 @@ use FoF\Upload\Commands\DownloadHandler;
 use FoF\Upload\Processors\ImageProcessor;
 use GuzzleHttp\Client;
 use HideInMatrix\TelegramUpload\Client\TgDiskClient;
+use HideInMatrix\TelegramUpload\Commands\DeleteFileHandler;
 use HideInMatrix\TelegramUpload\Configuration;
 use HideInMatrix\TelegramUpload\Downloaders\TelegramDownloader;
 use HideInMatrix\TelegramUpload\Processors\PreserveImageProcessor;
@@ -17,6 +18,7 @@ final class TelegramServiceProvider extends AbstractServiceProvider
 {
     public function register(): void
     {
+        $this->container->bind(\FoF\Upload\Commands\DeleteFileHandler::class, DeleteFileHandler::class);
         $this->container->singleton(Configuration::class, function ($container) {
             $config = $container->make(Config::class);
             $values = $config['telegram-upload'] ?? [];
