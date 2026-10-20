@@ -71,6 +71,8 @@ php flarum cache:clear
 
 ## 后续自动发布（v0.1.1 起）
 
-提交代码、通过本地测试并更新 CHANGELOG 后，推送新的 `vX.Y.Z` 标签。仓库的 `Publish Telegram Upload` workflow 会先运行完整 PHP 测试和非 root 目录权限复现测试，再生成 ZIP、tar.gz 和 SHA256SUMS，使用当前标签的变更记录发布 GitHub Release。测试失败时不会创建 Release。
+提交代码、通过本地测试并更新 CHANGELOG 后，执行 `git push origin vX.Y.Z` 推送版本标签。只有符合 `vX.Y.Z` 格式的版本标签会触发 Actions；推送 `main` 或其他分支、创建或更新 PR 均不触发。
+
+每个版本标签只创建一次 `Publish Telegram Upload` workflow 运行；该流程调用可复用的 PHP 测试矩阵，矩阵通过后再执行完整 PHP 测试与非 root 目录权限检查，生成 ZIP、tar.gz 和 SHA256SUMS，并发布 GitHub Release。`Telegram Upload PHP` 仅作为可复用流程，不再独立响应 push、PR 或手动触发。测试失败时不会发布 Release。
 
 Composer 版本继续从 Git 标签获取，不修改 `js/package.json` 中供前端构建使用的私有包版本号。Packagist 的同步仍由其 GitHub webhook 负责，GitHub Release 不代表 Packagist 一定已经同步；发布后应分别检查二者。权限修复属于服务器操作，workflow 不连接或修改用户论坛服务器。

@@ -1,6 +1,7 @@
 name: Telegram Upload PHP
 
-on: [workflow_dispatch, push, pull_request]
+on:
+  workflow_call:
 
 jobs:
   run:
