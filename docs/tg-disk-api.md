@@ -1,25 +1,26 @@
-# tg-disk API Key 对接核对
+# tg-disk 上传接口核对
 
-核对日期：2026-10-19。依据 [HideInMatrix/tg-disk 提交 0e2ba5e](https://github.com/HideInMatrix/tg-disk/commit/0e2ba5e30cafd5e55adebc502355de28df2779c2)。本次未修改 tg-disk 或线上论坛配置。
+核对日期：2026-10-20。依据 [HideInMatrix/tg-disk 提交 0e2ba5e](https://github.com/HideInMatrix/tg-disk/commit/0e2ba5e30cafd5e55adebc502355de28df2779c2)。未修改 tg-disk 或线上论坛配置。
 
-## 上传
+## 站点 URL 与存储方式
 
-[`assertApiKey`](https://github.com/HideInMatrix/tg-disk/blob/0e2ba5e30cafd5e55adebc502355de28df2779c2/server/utils/apiKey.ts) 要求服务端私密 `NUXT_API_KEY` 至少 32 个字符，外部客户端通过 `X-API-Key` 请求头提交。缺少有效服务端配置返回 503，认证失败返回 401。浏览器管理员会话是另一种入口，论坛服务端无需模拟登录。
+插件只需配置 HTTPS 站点 URL（如 `https://pan.example.com`），选择新上传使用 Telegram 或 Cloudflare R2。
 
-[`POST /api/telegram/send`](https://github.com/HideInMatrix/tg-disk/blob/0e2ba5e30cafd5e55adebc502355de28df2779c2/server/api/telegram/send.post.ts) 在解析上传前调用鉴权，multipart 字段仍为 `file`、`fileName`、`chatId`，上限 10 MiB。成功结构仍含 `code: 200`、`data.file_id`、`data.file_size`，因此本扩展只需新增请求头及认证错误处理，现有上传格式不需要调整。
+| 后端 | 上传接口 | multipart 字段 | 保存的完整直链 |
+| --- | --- | --- | --- |
+| Telegram | `POST /api/telegram/send` | `file`、`fileName`、`chatId` | `{站点}/file/{file_id}` |
+| R2 | `POST /api/r2/send` | `file`、`fileName` | `{站点}/r2/{file_id}` |
 
-扩展继续使用 UUID `.bin` 文件名触发 Telegram document 保存，论坛保留原文件名。API Key 只从论坛 config.php 或容器环境变量读取，不放入 URL、multipart、前端或公开 API；上传不跟随重定向。
+两种接口均返回 `code: 200`、`data.file_id`、`data.file_size`，不返回完整文件 URL。因此插件使用**上传当时**的站点 URL 和后端拼接一次，保存到附件的 `url` 字段，后续切换配置不重新生成旧 URL。R2 的 `file_id` 是 UUID 加原扩展名的对象 key。R2 上传传入原文件名及 MIME；Telegram 继续用 UUID `.bin` 触发 document 保存，避免图片压缩，论坛保留原文件名。
 
-## 读取、索引与删除
+## 鉴权
 
-`GET /file/{file_id}` 仍由 tg-disk 的文件访问规则管理，未调用 `assertApiKey`。本扩展不向文件读取请求附加密钥，论坛入口仍执行 FoF Upload 下载权限校验。
+两个上传接口在解析文件前均调用 `assertApiKey`。tg-disk 私密 `NUXT_API_KEY` 至少 32 个字符，论坛通过 `X-API-Key` 请求头提交。缺少服务端有效密钥返回 503，认证失败返回真实 HTTP 401。上传不跟随重定向，响应错误不回显密钥或上游正文。
 
-Telegram 上传与 tg-disk 文件管理索引是两步操作；本扩展只执行上传并将附件索引保存在论坛，不调用 `POST /api/files`，因此论坛附件不会自动列入 tg-disk 文件管理页。
+文件直链使用 `/file/`、`/r2/`，读取不附加 API Key，由 tg-disk 的 host/referer 规则管理。论坛页面加载直链时，需在 tg-disk 防盗链配置中允许相应论坛域名。旧论坛下载入口仍执行 FoF 权限检查，读取新记录时使用已保存的绝对 URL；旧 Telegram 代理记录继续按 file_id 读取 `/file/`，不受新上传选择 R2 的影响。
 
-tg-disk 的 `DELETE /api/files/:id` 依赖已有索引的 `message_id`、`chat_id`，且 Telegram 删除失败时仍可能删除索引。因此不能把该接口的索引删除结果直接当作 Telegram 附件已删除。本扩展仍明确提示不支持远程删除。
+## 索引与删除
 
-## 服务端与文档结论
+上传与 tg-disk 文件管理索引是两步操作。插件不调用 `POST /api/files`，只把附件索引保存到论坛。两种后端的删除都仅清理论坛记录，不调用 tg-disk、Telegram 或 R2 的远程删除。
 
-本次接入所需的鉴权检查已经存在，未发现需要为该上传流程修改 tg-disk 服务端的接口差异。tg-disk README 中部分旧 curl / JavaScript 上传示例尚未附加 `X-API-Key`，使用时需补充请求头；不要关闭服务端鉴权来兼容旧客户端。
-
-扩展测试使用模拟 HTTP，验证了请求与错误处理；未使用真实密钥执行线上 Telegram 上传。
+测试使用模拟 HTTP 覆盖 Telegram/R2 上传、完整 URL 持久化、切换配置、鉴权和旧链接兼容；未使用真实密钥向线上存储上传测试附件。

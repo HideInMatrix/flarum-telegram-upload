@@ -38,7 +38,8 @@ final class DeleteFileTest extends TestCase
         return $file;
     }
 
-    public function test_admin_removes_only_the_media_record_without_configuration_or_remote_calls(): void
+    #[\PHPUnit\Framework\Attributes\DataProvider('storageProviders')]
+    public function test_admin_removes_only_the_media_record_without_configuration_or_remote_calls(string $provider, string $id): void
     {
         $this->config('telegram-upload', []);
         // Even a changed MIME mapping must not send a historical Telegram file to local storage.
@@ -50,6 +51,7 @@ final class DeleteFileTest extends TestCase
         $container->instance(TgDiskClient::class, new TgDiskClient(new Client(['handler' => $stack]), new Configuration()));
         $target = $this->file('00000000-0000-4000-8000-000000000002');
         $other = $this->file('00000000-0000-4000-8000-000000000003');
+        $target->forceFill(['path' => $provider.'/'.$id, 'remote_id' => $id, 'url' => 'https://disk.example.com/'.($provider === 'r2' ? 'r2/' : 'file/').$id])->save();
 
         $response = $this->send($this->requestAsUser($this->request('DELETE', '/api/fof/upload/delete/'.$target->uuid), 1));
 
@@ -57,6 +59,11 @@ final class DeleteFileTest extends TestCase
         self::assertNull(File::find($target->id));
         self::assertNotNull(File::find($other->id));
         self::assertSame([], $history);
+    }
+
+    public static function storageProviders(): array
+    {
+        return [['telegram', 'test_file_id'], ['r2', 'fixture-key.avif']];
     }
 
     public function test_guest_and_owner_cannot_bypass_fof_delete_permissions(): void

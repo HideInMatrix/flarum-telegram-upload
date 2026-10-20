@@ -34,11 +34,11 @@ Flarum 官方推荐通过公开 Git 仓库和版本标签发布，再提交到 P
 在论坛根目录执行：
 
 ```sh
-composer require hideinmatrix/flarum-telegram-upload:"^0.1"
+composer require hideinmatrix/flarum-telegram-upload:"^0.2"
 php flarum cache:clear
 ```
 
-在 Flarum 后台启用 FoF Upload 和 Telegram Upload，然后填写三项配置。Composer 自动处理 PHP 包依赖；是否允许普通用户上传、下载仍由论坛管理员设置。
+在 Flarum 后台启用 FoF Upload 和 Telegram Upload，然后填写站点 URL、存储方式、API Key 以及 Telegram 所需的频道 ID。Composer 自动处理 PHP 包依赖；是否允许普通用户上传、下载仍由论坛管理员设置。
 
 后续兼容更新：
 
@@ -61,11 +61,11 @@ php flarum cache:clear
 composer config --unset repositories.telegram-upload-local
 # 仅在之前配置了同名 VCS 来源时执行下一行：
 composer config --unset repositories.telegram-upload
-composer require hideinmatrix/flarum-telegram-upload:"^0.1"
+composer require hideinmatrix/flarum-telegram-upload:"^0.2"
 php flarum cache:clear
 ```
 
-先用 `composer require hideinmatrix/flarum-telegram-upload:"^0.1" --dry-run` 检查解析范围，再执行实际安装。若有长驻 worker/realtime 进程，更新成功后通过现有容器管理方式重启相关进程以加载新代码。无需修改 FoF Upload 源码，也不用把 ZIP 手动覆盖进 `vendor/`。
+先用 `composer require hideinmatrix/flarum-telegram-upload:"^0.2" --dry-run` 检查解析范围，再执行实际安装。若有长驻 worker/realtime 进程，更新成功后通过现有容器管理方式重启相关进程以加载新代码。无需修改 FoF Upload 源码，也不用把 ZIP 手动覆盖进 `vendor/`。
 
 本地路径源目录可在确认正式版本加载正常后归档；附件与插件配置仍保存在论坛数据库中。
 

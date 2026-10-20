@@ -21,12 +21,21 @@ final class TelegramDownloader implements Downloader
 
     public function download(File $file, ?Download $command = null): ResponseInterface
     {
-        if (!Configuration::validFileId($file->remote_id)) {
+        $provider = str_starts_with((string) $file->path, 'r2/') ? 'r2' : 'telegram';
+        if (!Configuration::validStorageId($file->remote_id, $provider)) {
             return new EmptyResponse(404);
         }
 
         try {
-            $response = $this->client->download($file->remote_id);
+            $suffix = ($provider === 'r2' ? '/r2/' : '/file/').rawurlencode($file->remote_id);
+            if (Configuration::validPublicUrl((string) $file->url) && str_ends_with($file->url, $suffix)) {
+                $response = $this->client->downloadUrl($file->url);
+            } elseif ($provider === 'telegram') {
+                // Older records contain a forum proxy URL; keep resolving their Telegram ID.
+                $response = $this->client->download($file->remote_id);
+            } else {
+                return new EmptyResponse(404);
+            }
         } catch (\Throwable) {
             return new EmptyResponse(502);
         }

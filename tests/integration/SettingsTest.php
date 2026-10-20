@@ -21,13 +21,14 @@ final class SettingsTest extends TestCase
     private function values(): array
     {
         return [
-            'hideinmatrix-telegram-upload.upload_url' => 'https://disk.example.com/api/telegram/send',
+            'hideinmatrix-telegram-upload.base_url' => 'https://disk.example.com',
+            'hideinmatrix-telegram-upload.provider' => 'telegram',
             'hideinmatrix-telegram-upload.chat_id' => '-100123456',
             'hideinmatrix-telegram-upload.api_key' => str_repeat('s', 32),
         ];
     }
 
-    public function test_admin_can_save_all_three_settings(): void
+    public function test_admin_can_save_site_provider_and_credentials(): void
     {
         $response = $this->send($this->requestAsUser($this->request('POST', '/api/settings')->withParsedBody($this->values()), 1));
         self::assertSame(204, $response->getStatusCode(), (string) $response->getBody());
@@ -48,6 +49,35 @@ final class SettingsTest extends TestCase
         self::assertSame(403, $this->send($request)->getStatusCode());
         self::assertSame(403, $this->send($this->requestAsUser($request, 2))->getStatusCode());
         self::assertNull($this->app()->getContainer()->make(SettingsRepositoryInterface::class)->get('hideinmatrix-telegram-upload.api_key'));
+    }
+
+    public function test_new_site_url_overrides_legacy_endpoint_and_r2_needs_no_channel(): void
+    {
+        $this->setting('hideinmatrix-telegram-upload.upload_url', 'https://legacy.example.com/api/telegram/send');
+        $values = $this->values();
+        $values['hideinmatrix-telegram-upload.provider'] = 'r2';
+        $values['hideinmatrix-telegram-upload.chat_id'] = '';
+        $response = $this->send($this->requestAsUser($this->request('POST', '/api/settings')->withParsedBody($values), 1));
+        self::assertSame(204, $response->getStatusCode(), (string) $response->getBody());
+        $container = $this->app()->getContainer();
+        $container->forgetInstance(Configuration::class);
+        $config = $container->make(Configuration::class);
+        self::assertTrue($config->isConfigured());
+        self::assertSame('https://disk.example.com/api/r2/send', $config->uploadUrl());
+
+        $container->make(SettingsRepositoryInterface::class)->set('hideinmatrix-telegram-upload.base_url', '');
+        $container->forgetInstance(Configuration::class);
+        self::assertFalse($container->make(Configuration::class)->isConfigured());
+    }
+
+    public function test_bad_provider_and_endpoint_in_site_url_are_rejected(): void
+    {
+        $response = $this->send($this->requestAsUser($this->request('POST', '/api/settings')->withParsedBody([
+            'hideinmatrix-telegram-upload.base_url' => 'https://disk.example.com/api/r2/send',
+            'hideinmatrix-telegram-upload.provider' => 'unknown',
+        ]), 1));
+        self::assertSame(422, $response->getStatusCode());
+        self::assertCount(2, json_decode((string) $response->getBody(), true)['errors']);
     }
 
     public function test_bad_values_are_rejected_without_echoing_credentials(): void

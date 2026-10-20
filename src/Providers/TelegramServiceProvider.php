@@ -36,6 +36,15 @@ final class TelegramServiceProvider extends AbstractServiceProvider
                     $values[$name] = $value;
                 }
             }
+            foreach (['base_url', 'provider'] as $name) {
+                $value = $settings->get('hideinmatrix-telegram-upload.'.$name);
+                if ($value !== null) {
+                    $values[$name] = $value;
+                    if ($name === 'base_url') {
+                        unset($values['upload_url']);
+                    }
+                }
+            }
 
             return new Configuration($values);
         });

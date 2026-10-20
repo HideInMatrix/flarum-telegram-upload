@@ -40,6 +40,39 @@ final class TelegramDownloaderTest extends TestCase
         self::assertStringNotContainsString("\n", $response->getHeaderLine('Content-Disposition'));
     }
 
+    public function test_saved_urls_are_used_after_provider_site_and_credentials_change(): void
+    {
+        foreach (['telegram' => ['test_file_id', '/file/'], 'r2' => ['fixture-key.avif', '/r2/']] as $provider => [$id, $route]) {
+            $history = [];
+            $stack = HandlerStack::create(new MockHandler([new Response(200, [], 'zip')]));
+            $stack->push(\GuzzleHttp\Middleware::history($history));
+            $downloader = new TelegramDownloader(new TgDiskClient(new Client(['handler' => $stack]), new Configuration([
+                'base_url' => 'https://new-disk.example.com', 'provider' => $provider === 'r2' ? 'telegram' : 'r2',
+            ])));
+            $file = $this->file();
+            $file->remote_id = $id;
+            $file->path = $provider.'/'.$id;
+            $file->url = 'https://original-disk.example.com'.$route.$id;
+            self::assertSame(200, $downloader->download($file)->getStatusCode());
+            self::assertSame($file->url, (string) $history[0]['request']->getUri());
+            self::assertFalse($history[0]['request']->hasHeader('X-API-Key'));
+        }
+    }
+
+    public function test_legacy_telegram_download_still_uses_file_route_after_switching_to_r2(): void
+    {
+        $history = [];
+        $stack = HandlerStack::create(new MockHandler([new Response(200, [], 'zip')]));
+        $stack->push(\GuzzleHttp\Middleware::history($history));
+        $downloader = new TelegramDownloader(new TgDiskClient(new Client(['handler' => $stack]), new Configuration([
+            'base_url' => 'https://disk.example.com', 'provider' => 'r2',
+        ])));
+        $file = $this->file();
+        $file->url = 'https://forum.example.com/api/tinker-telegram/fixture';
+        self::assertSame(200, $downloader->download($file)->getStatusCode());
+        self::assertSame('https://disk.example.com/file/test_file_id', (string) $history[0]['request']->getUri());
+    }
+
     public function test_size_mismatch_is_not_delivered_as_a_valid_attachment(): void
     {
         self::assertSame(502, $this->downloader(new Response(200, ['Content-Length' => '10'], 'bad'))->download($this->file())->getStatusCode());

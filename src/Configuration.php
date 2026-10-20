@@ -12,26 +12,46 @@ final class Configuration
 
     public function baseUrl(): string
     {
-        $url = array_key_exists('upload_url', $this->values)
-            ? (string) $this->values['upload_url']
-            : rtrim((string) ($this->values['base_url'] ?? ''), '/').'/api/telegram/send';
-        $parts = parse_url($url);
-
-        if (!$parts || ($parts['scheme'] ?? '') !== 'https' || empty($parts['host'])
-            || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])) {
+        // Read old endpoint settings until the administrator saves the new base URL.
+        $legacy = array_key_exists('upload_url', $this->values);
+        $url = $legacy ? (string) $this->values['upload_url'] : (string) ($this->values['base_url'] ?? '');
+        if (!self::validPublicUrl($url)) {
             throw new InvalidArgumentException('Configure an HTTPS tg-disk URL without credentials, query or fragment.');
         }
-
-        if (!str_ends_with($parts['path'] ?? '', '/api/telegram/send')) {
+        if ($legacy && !str_ends_with($url, '/api/telegram/send')) {
             throw new InvalidArgumentException('The upload URL must end in /api/telegram/send.');
         }
+        if ($legacy) {
+            $url = substr($url, 0, -strlen('/api/telegram/send'));
+        } elseif (preg_match('~/api/(telegram|r2)/send/?$~', $url)) {
+            throw new InvalidArgumentException('Configure the tg-disk base URL, not an upload endpoint.');
+        }
 
-        return substr($url, 0, -strlen('/api/telegram/send'));
+        return rtrim($url, '/');
+    }
+
+    public function provider(): string
+    {
+        $provider = (string) ($this->values['provider'] ?? 'telegram');
+        if (!in_array($provider, ['telegram', 'r2'], true)) {
+            throw new InvalidArgumentException('Select Telegram or R2 storage.');
+        }
+
+        return $provider;
     }
 
     public function uploadUrl(): string
     {
-        return $this->baseUrl().'/api/telegram/send';
+        return $this->baseUrl().'/api/'.$this->provider().'/send';
+    }
+
+    public function fileUrl(string $id): string
+    {
+        if (!self::validStorageId($id, $this->provider())) {
+            throw new InvalidArgumentException('Invalid storage file ID.');
+        }
+
+        return $this->baseUrl().($this->provider() === 'r2' ? '/r2/' : '/file/').rawurlencode($id);
     }
 
     public function chatId(): string
@@ -58,7 +78,9 @@ final class Configuration
     {
         try {
             $this->baseUrl();
-            $this->chatId();
+            if ($this->provider() === 'telegram') {
+                $this->chatId();
+            }
             $this->apiKey();
 
             return true;
@@ -70,5 +92,27 @@ final class Configuration
     public static function validFileId(mixed $id): bool
     {
         return is_string($id) && preg_match('/^[A-Za-z0-9_-]{6,255}$/D', $id) === 1;
+    }
+
+    public static function validStorageId(mixed $id, string $provider): bool
+    {
+        if ($provider === 'telegram') {
+            return self::validFileId($id);
+        }
+
+        // tg-disk generates a flat UUID key with an optional filename extension.
+        return $provider === 'r2' && is_string($id)
+            && preg_match('/^[A-Za-z0-9_-][A-Za-z0-9_.-]{5,254}$/D', $id) === 1
+            && !str_contains($id, '..');
+    }
+
+    public static function validPublicUrl(string $url): bool
+    {
+        $parts = parse_url($url);
+
+        return !preg_match('/[\x00-\x20\x7F\\\\]/', $url) && filter_var($url, FILTER_VALIDATE_URL)
+            && $parts && ($parts['scheme'] ?? '') === 'https' && !empty($parts['host'])
+            && !isset($parts['user']) && !isset($parts['pass'])
+            && !isset($parts['query']) && !isset($parts['fragment']);
     }
 }

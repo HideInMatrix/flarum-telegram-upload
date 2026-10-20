@@ -14,7 +14,7 @@ final class ValidateSettings
 
     public function handle(Saving $event): void
     {
-        $methods = ['upload_url' => 'uploadUrl', 'chat_id' => 'chatId', 'api_key' => 'apiKey'];
+        $methods = ['upload_url' => 'uploadUrl', 'base_url' => 'baseUrl', 'provider' => 'provider', 'chat_id' => 'chatId', 'api_key' => 'apiKey'];
         $errors = [];
         foreach ($methods as $name => $method) {
             $key = 'hideinmatrix-telegram-upload.'.$name;
@@ -27,7 +27,7 @@ final class ValidateSettings
                 $event->settings[$key] = $value;
             }
             // Empty fields allow administrators to clear or configure the integration in stages.
-            if ($value === '') {
+            if ($value === '' && $name !== 'provider') {
                 continue;
             }
             try {

@@ -13,6 +13,17 @@ final class ConfigurationTest extends TestCase
         self::assertFalse((new Configuration())->isConfigured());
     }
 
+    public function test_r2_uses_the_site_url_and_needs_no_telegram_channel(): void
+    {
+        $config = new Configuration(['base_url' => 'https://disk.example.com/', 'provider' => 'r2', 'api_key' => str_repeat('k', 32)]);
+        self::assertTrue($config->isConfigured());
+        self::assertSame('https://disk.example.com/api/r2/send', $config->uploadUrl());
+        self::assertSame('https://disk.example.com/r2/fixture-key.avif', $config->fileUrl('fixture-key.avif'));
+        self::assertFalse((new Configuration(['provider' => 'unknown']))->isConfigured());
+        self::assertFalse(Configuration::validStorageId('../secret', 'r2'));
+        self::assertFalse(Configuration::validStorageId('key-with?query', 'r2'));
+    }
+
     public function test_valid_configuration_normalizes_the_base_url(): void
     {
         $configuration = new Configuration(['base_url' => 'https://disk.example.com/', 'chat_id' => '-100123456', 'api_key' => str_repeat('k', 32)]);

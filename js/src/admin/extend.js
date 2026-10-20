@@ -6,11 +6,19 @@ const translation = (key) => app.translator.trans(`hideinmatrix-telegram-upload.
 export default [
   new Extend.Admin()
     .setting(() => ({
-      setting: 'hideinmatrix-telegram-upload.upload_url',
-      label: translation('upload_url_label'),
-      help: translation('upload_url_help'),
+      setting: 'hideinmatrix-telegram-upload.base_url',
+      label: translation('base_url_label'),
+      help: translation('base_url_help'),
       type: 'url',
-      placeholder: 'https://your-tg-disk.example.com/api/telegram/send',
+      placeholder: 'https://your-tg-disk.example.com',
+    }), 40)
+    .setting(() => ({
+      setting: 'hideinmatrix-telegram-upload.provider',
+      label: translation('provider_label'),
+      help: translation('provider_help'),
+      type: 'select',
+      options: { telegram: 'Telegram', r2: 'Cloudflare R2' },
+      default: 'telegram',
     }), 30)
     .setting(() => ({
       setting: 'hideinmatrix-telegram-upload.api_key',

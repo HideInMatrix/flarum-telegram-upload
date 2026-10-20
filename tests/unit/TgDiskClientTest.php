@@ -32,7 +32,10 @@ final class TgDiskClientTest extends TestCase
         $mock = new MockHandler([new Response(200, [], '{"code":200,"data":{"file_id":"test_file_id","file_size":7}}')]);
         $bytes = "GIF\0\xff\x01x";
         $client = $this->client($mock, $history);
-        self::assertSame('test_file_id', $client->upload('fixture', $bytes, strlen($bytes)));
+        $result = $client->upload('fixture', $bytes, strlen($bytes));
+        self::assertSame('test_file_id', $result->fileId);
+        self::assertSame('https://disk.example.com/file/test_file_id', $result->url);
+        self::assertSame('telegram', $result->provider);
         $request = $history[0]['request'];
         self::assertSame('https://disk.example.com/api/telegram/send', (string) $request->getUri());
         self::assertSame(str_repeat('k', 32), $request->getHeaderLine('X-API-Key'));
@@ -41,6 +44,25 @@ final class TgDiskClientTest extends TestCase
         self::assertStringContainsString('filename="fixture.bin"', (string) $request->getBody());
         self::assertStringContainsString($bytes, (string) $request->getBody());
         self::assertFalse($history[0]['options']['allow_redirects']);
+    }
+
+    public function test_r2_upload_preserves_filename_and_mime_without_a_channel(): void
+    {
+        $history = [];
+        $stack = HandlerStack::create(new MockHandler([new Response(200, [], '{"code":200,"data":{"file_id":"fixture-key.avif","file_size":3}}')]));
+        $stack->push(Middleware::history($history));
+        $client = new TgDiskClient(new Client(['handler' => $stack]), new Configuration([
+            'base_url' => 'https://disk.example.com', 'provider' => 'r2', 'api_key' => str_repeat('k', 32),
+        ]));
+        $result = $client->upload('fixture', 'avf', 3, 'original.avif', 'image/avif');
+        self::assertSame('https://disk.example.com/r2/fixture-key.avif', $result->url);
+        self::assertSame('r2', $result->provider);
+        self::assertSame('https://disk.example.com/api/r2/send', (string) $history[0]['request']->getUri());
+        self::assertSame(str_repeat('k', 32), $history[0]['request']->getHeaderLine('X-API-Key'));
+        $body = (string) $history[0]['request']->getBody();
+        self::assertStringContainsString('filename="original.avif"', $body);
+        self::assertStringContainsString('Content-Type: image/avif', $body);
+        self::assertStringNotContainsString('chatId', $body);
     }
 
     #[DataProvider('authenticationStatuses')]
