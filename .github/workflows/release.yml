@@ -21,6 +21,7 @@ jobs:
       contents: write
     env:
       RELEASE_TAG: ${{ github.ref_name }}
+      COMPOSER_ROOT_VERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'dev-main' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,7 +37,7 @@ jobs:
           set +e
           docker run --rm -v "$PWD:/app" -w /app \
             -e FLARUM_TEST_TMP_DIR_LOCAL=/app/tests/integration/tmp \
-            -e COMPOSER_ROOT_VERSION="$RELEASE_TAG" \
+            -e COMPOSER_ROOT_VERSION \
             telegram-upload-test sh -c 'composer install --no-interaction --no-plugins --no-scripts --no-progress && composer validate --strict && composer lint && composer test:setup && composer test && sh tests/permissions.sh' > "$RUNNER_TEMP/validation.log" 2>&1
           result=$?
           cat "$RUNNER_TEMP/validation.log"
