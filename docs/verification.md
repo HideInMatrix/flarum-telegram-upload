@@ -1,6 +1,6 @@
 # 本地验证记录
 
-日期：2026-10-19。
+日期：2026-10-20。
 
 环境：基于官方 `composer:2` 并安装 GD 的 `docker/Dockerfile.test` 容器，PHP 8.5.11；Composer 安装解析到 Flarum 2.0.2、FoF Upload 2.0.1、flarum/testing 2.0.1。SQLite 测试数据库位于本项目被 Git 忽略的 `tests/integration/tmp/`。完整论坛 API 启动需要 GD，原始 Composer 镜像未包含此扩展。
 
@@ -9,8 +9,9 @@
 - `composer validate --strict`：通过。
 - `composer lint`：PHP 语法检查通过。
 - `npm run build`：Flarum 官方 webpack 配置的管理端生产构建通过。
-- `composer test:unit`：30 项测试、55 项断言通过。
-- `composer test:integration`：13 项测试、41 项断言通过。
+- `composer test:unit`：32 项测试、65 项断言通过。
+- `composer test:integration`：14 项测试、47 项断言通过。
+- `sh tests/permissions.sh`：在隔离测试容器中以实际 `www-data` 用户复现目录权限错误，再验证修复命令有效。
 
 覆盖配置缺失与 URL 校验、上传 multipart 原始字节、Telegram document 文件名、上游失败及大小不一致、超限请求拦截、下载响应和文件名、真实 Flarum 扩展启动、旧 URL 兼容、访客拒绝、管理员图片读取及论坛媒体记录删除。
 

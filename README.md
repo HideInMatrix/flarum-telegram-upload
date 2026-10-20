@@ -17,13 +17,13 @@
 
 ## 安装
 
-**首个公开版本与 Packagist 提交尚在准备中。** 正式上架后，在论坛根目录执行：
+在论坛根目录执行：
 
 ```sh
 composer require hideinmatrix/flarum-telegram-upload:"^0.1"
 ```
 
-目前有私有仓库读取权限的开发者仍可添加本仓库的 VCS 来源安装 `dev-main`。发布流程、后续更新、Extension Manager 和当前路径包切换方式参见 [发布说明](docs/releasing.md)，版本变更参见 [CHANGELOG](CHANGELOG.md)。
+发布流程、后续更新、Extension Manager 和当前路径包切换方式参见 [发布说明](docs/releasing.md)，版本变更参见 [CHANGELOG](CHANGELOG.md)。
 
 在管理后台启用 **Telegram Upload**，进入该扩展的配置页填写并保存：
 
@@ -80,6 +80,8 @@ docker run --rm -v "$PWD:/app" -w /app \
 前端源码沿用官方 CLI 的 JavaScript 管理端结构；修改后台界面后在 `js/` 执行 `npm ci && npm run build`，并提交 `js/dist/admin.js`，以便 Composer 安装直接使用。
 
 ## 运行条件
+
+PHP 运行用户必须能写入论坛存储目录。FoF Upload 即使使用 Telegram 存储，也会初始化 `storage/private-shared/files`；权限错误会在 tg-disk 调用前触发 500。目录修复命令和 v0.1.1 的只读检查工具参见 [上传错误排查](docs/troubleshooting.md)。
 
 tg-disk 需要提供 `POST /api/telegram/send` 和 `GET /file/{file_id}`，上传结果包含 `code`、`data.file_id`、`data.file_size`；Bot 及频道权限在 tg-disk 侧配置。上传通过服务端 `X-API-Key` 请求头鉴权，401/403 返回明确提示，不转发上游响应中的敏感内容。文件读取沿用 tg-disk 的 host/referer 规则，不附加 API Key。服务器必须能访问 tg-disk，tg-disk 的文件访问规则也需允许论坛服务端读取。10 MiB 是当前对接接口的限制。[接口核对记录](docs/tg-disk-api.md)
 
