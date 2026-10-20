@@ -1,6 +1,19 @@
 # Changelog
 
-## Unreleased — planned v0.1.0
+## 0.1.1 - 2026-10-20
+
+### Fixes
+- Document the confirmed FoF Upload storage permission failure that occurs before a Telegram upload: `storage/private-shared/files` must be writable by the PHP worker user. Updating this package does not change existing server directory ownership; follow `docs/troubleshooting.md` to repair it.
+- Add a read-only storage preflight script that reports blocked paths and refuses root checks, avoiding misleading permission results.
+
+### Tests
+- Exercise the complete PNG upload API, outbound bytes and persisted media record.
+- Reproduce the root-owned private storage failure as the PHP worker user and verify the documented permission repair.
+
+### Maintenance
+- Publish GitHub Releases with archives and SHA-256 checksums automatically after tag-triggered tests pass.
+
+## 0.1.0 - 2026-10-19
 
 - Initial Composer extension for Flarum 2.x, generated from the official Flarum CLI scaffold.
 - Telegram attachment storage through FoF Upload 2.x and tg-disk, with a 10 MiB limit.
@@ -10,5 +23,3 @@
 - Preserve original image bytes when no resizing or watermarking is configured.
 - Delete media records from the forum without deleting Telegram content or sending a remote request, including when upload configuration is missing.
 - Retain FoF delete permissions and the original behavior of other storage adapters.
-
-The initial public release and Packagist submission are pending. No stable tag has been published yet.
