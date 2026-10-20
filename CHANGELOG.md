@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0 - 2026-10-20
+
+### Features
+- Configure a tg-disk site URL and choose Telegram or Cloudflare R2 for new uploads. R2 needs no Telegram channel ID.
+- Persist absolute attachment URLs at upload time: `/file/{id}` for Telegram and `/r2/{key}` for R2. New image previews use these direct URLs.
+- Preserve R2 filenames and MIME types while keeping Telegram document uploads byte-preserving.
+
+### Compatibility
+- Keep existing URLs unchanged when switching storage or site settings. Preserve the legacy forum proxy route and old full-endpoint configuration.
+- Keep forum-only media deletion for both storage backends and retain FoF authorization checks.
+- Sites constrained to `^0.1` must explicitly require `^0.2` to receive this release. Direct URL access is governed by tg-disk; it does not use the forum download permission gate.
+
 ## 0.1.2 - 2026-10-20
 
 ### Fixes
