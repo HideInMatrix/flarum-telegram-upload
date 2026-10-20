@@ -2,7 +2,7 @@
 
 ## 分发方式
 
-本扩展是 Composer 包 `hideinmatrix/flarum-telegram-upload`，支持 Flarum `^2.0`、PHP `^8.3`，依赖 FoF Upload `^2.0.1`。首个计划版本为 `v0.1.0`；扩展自身的版本号与 Flarum 主版本号独立。
+本扩展是 Composer 包 `hideinmatrix/flarum-telegram-upload`，支持 Flarum `^2.0`、PHP `^8.3`，依赖 FoF Upload `^2.0.1`。首个正式标签为 `v0.1.0`；扩展自身的版本号与 Flarum 主版本号独立。
 
 Flarum 官方推荐通过公开 Git 仓库和版本标签发布，再提交到 Packagist。Packagist 索引仓库与标签，并非上传 ZIP 的网站。GitHub Release 附件用于手动下载和校验，不代替 Composer 分发。
 
@@ -68,3 +68,9 @@ php flarum cache:clear
 先用 `composer require hideinmatrix/flarum-telegram-upload:"^0.1" --dry-run` 检查解析范围，再执行实际安装。若有长驻 worker/realtime 进程，更新成功后通过现有容器管理方式重启相关进程以加载新代码。无需修改 FoF Upload 源码，也不用把 ZIP 手动覆盖进 `vendor/`。
 
 本地路径源目录可在确认正式版本加载正常后归档；附件与插件配置仍保存在论坛数据库中。
+
+## 后续自动发布（v0.1.1 起）
+
+提交代码、通过本地测试并更新 CHANGELOG 后，推送新的 `vX.Y.Z` 标签。仓库的 `Publish Telegram Upload` workflow 会先运行完整 PHP 测试和非 root 目录权限复现测试，再生成 ZIP、tar.gz 和 SHA256SUMS，使用当前标签的变更记录发布 GitHub Release。测试失败时不会创建 Release。
+
+Composer 版本继续从 Git 标签获取，不修改 `js/package.json` 中供前端构建使用的私有包版本号。Packagist 的同步仍由其 GitHub webhook 负责，GitHub Release 不代表 Packagist 一定已经同步；发布后应分别检查二者。权限修复属于服务器操作，workflow 不连接或修改用户论坛服务器。
