@@ -68,6 +68,22 @@ final class DeleteFileTest extends TestCase
         self::assertNotNull(File::find($file->id));
     }
 
+    public function test_successful_other_storage_deletion_removes_the_record(): void
+    {
+        $file = $this->file('00000000-0000-4000-8000-000000000002', 'local');
+        $adapter = $this->createMock(UploadAdapter::class);
+        $adapter->expects(self::once())->method('delete')->willReturn(true);
+        $util = $this->getMockBuilder(Util::class)->disableOriginalConstructor()->onlyMethods(['isPrivateShared', 'getStorageAdapterForFile'])->getMock();
+        $util->method('isPrivateShared')->willReturn(false);
+        $util->expects(self::once())->method('getStorageAdapterForFile')->willReturn($adapter);
+        $this->app()->getContainer()->instance(Util::class, $util);
+
+        $response = $this->send($this->requestAsUser($this->request('DELETE', '/api/fof/upload/delete/'.$file->uuid), 1));
+
+        self::assertSame(204, $response->getStatusCode(), (string) $response->getBody());
+        self::assertNull(File::find($file->id));
+    }
+
     public function test_other_storage_adapters_keep_their_original_delete_behavior(): void
     {
         $file = $this->file('00000000-0000-4000-8000-000000000002', 'local');

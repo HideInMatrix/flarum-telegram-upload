@@ -44,7 +44,9 @@ jobs:
           if [ "$result" -ne 0 ]; then
             python3 - "$RUNNER_TEMP/validation.log" <<'PY'
           import pathlib, sys
-          text = pathlib.Path(sys.argv[1]).read_text(errors='replace')[-30000:]
+          text = pathlib.Path(sys.argv[1]).read_text(errors='replace')
+          errors = [line for line in text.splitlines() if any(term in line for term in ('Fatal error:', 'Exception:', 'Failed asserting', 'There were', 'Tests:', 'Error:', 'Invalid version'))]
+          text = '\n'.join(errors)[:3500] if errors else text[-3500:]
           escaped = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
           print('::error title=Validation output::' + escaped)
           PY
