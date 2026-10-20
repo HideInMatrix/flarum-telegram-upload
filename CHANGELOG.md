@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.2 - 2026-10-20
+
+### Fixes
+- Support FoF Upload 2.0.2, which narrows the deletion handler return type to `bool`. Keep compatibility with 2.0.1 and preserve the upstream authorization and storage deletion behavior. Telegram deletion still removes only the forum media record.
+
+### Tests
+- Verify successful and failed deletion through other storage adapters in addition to Telegram record cleanup.
+
+### Maintenance
+- Validate branch builds with a valid Composer development version and report concise test errors before publishing release archives.
+
 ## 0.1.1 - 2026-10-20
 
 ### Fixes
